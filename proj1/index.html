@@ -1,7 +1,221 @@
-<html>
-	<head>
-	</head>
-	<body>
-		Project 1 here
-	</body>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+<style>
+  body {
+    padding: 100px;
+    width: 1000px;
+    margin: auto;
+    text-align: left;
+    font-weight: 300;
+    font-family: 'Open Sans', sans-serif;
+    color: #121212;
+  }
+  h1, h2, h3, h4 {
+    font-family: 'Source Sans Pro', sans-serif;
+  }
+</style>
+<title>CS 184 Rasterizer</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link href="https://fonts.googleapis.com/css?family=Open+Sans|Source+Sans+Pro" rel="stylesheet">
+</head>
+
+
+<body>
+
+<h1 align="middle">CS 184: Computer Graphics and Imaging, Spring 2018</h1>
+<h1 align="middle">Project 1: Rasterizer</h1>
+<h2 align="middle">Simon Tsui, CS184-poggers</h2>
+
+<br><br>
+
+<div>
+
+<h2 align="middle">Overview</h2>
+<p> In this project, we went over various concepts in sampling and rasterization. There were a lot of components that had to be worked on such as the frame buffer, sample buffer, and texture maps. I found it cool seeing the tradeoffs between different implementations and the visual output that came as a result of changes in the code.</p>
+
+<h2 align="middle">Section I: Rasterization</h2>
+
+<h3 align="middle">Part 1: Rasterizing single-color triangles</h3>
+
+<h4> My process for rasterizing triangles </h4>
+<ol>
+  <li> Limiting the possible pixels to consider from the whole of the frame buffer to just those within the square (min_X, min_Y) and (max_X, max_Y). </li>
+  <li> Iterating pixel by pixel in this square and considering whether or not the point is in the triangle. We do this by:
+    <ol>
+      <li> First, we add 0.5 to both the x and y coordinates because we want to consider whether the center of the pixel is inside the triangle. </li>
+      <li> Then, we use the line formula: L(x, y) = -(x-x0)(y1-y0) + (y-y0)(x1-x0) </li>
+      <li> The triangle is composed of three lines. The point is inside the triangle if all three line equations are greater than 0 or all three line equations are less than 0.
+      We do this because we have to account for the winding order of the vertices (clockwise versus counter-clockwise)</li>
+    </ol>
+  </li>
+</ol>
+<img src="images/task1_p4.png" align="middle" width="400px"/>
+
+
+
+<p> Confining the points that we check to just the ones in the box that bounds the box helps improve performance. This also ensures that it is no worse than chekcing each sampel within the bounding box of the triangle.</p>
+
+
+<div align="middle">
+  <table style="width=100%">
+    <tr>
+      <td>
+        <img src="images/image1.png" align="middle" width="400px"/>
+        <figcaption align="middle">Caption goes here.</figcaption>
+      </td>
+      <td>
+        <img src="images/image2.png" align="middle" width="400px"/>
+        <figcaption align="middle">Caption goes here.</figcaption>
+      </td>
+    </tr>
+    <br>
+    <tr>
+      <td>
+        <img src="images/image3.png" align="middle" width="400px"/>
+        <figcaption align="middle">Caption goes here.</figcaption>
+      </td>
+      <td>
+        <img src="images/image4.png" align="middle" width="400px"/>
+        <figcaption align="middle">Caption goes here.</figcaption>
+      </td>
+    </tr>
+  </table>
+</div>
+
+
+<h3 align="middle">Part 2: Antialiasing triangles</h3>
+Supersampling algorithm
+<ol>
+  <li> We scale the sample buffer by the sample_rate to fit the new supersamples in our buffer. </li>
+  <li> For each triangle pixel I took the same steps as in Part 1 but with the following alterations:
+    <ol>
+      <li> Previously, we just got the center by doing incrementing the x and y coordinates by 0.5.
+        I changed this to be 0.5/ sqrt(sample_rate). So we get the pixel in more detail.</li>
+      <li> For each pixel I traversed each of axis by the 0.5/ sqrt(sample_rate) rate to cover all of the supersample squares in the pixel.
+      <li> I then stored the color value directly in the sample_buffer instead of calling fill_pixel. </li>
+    </ol>
+  </li>
+  <li> The final addition was made in the rasterize to frame buffer function. Previously,
+    the sample buffer and frame buffer were the same size. I had to change how which
+    sample buffer indices the frame buffer pulled from. </li>
+  <li> I then averaged the supersample colors for each pixel to get the value to return to the framebuffer. </li>
+</ol>
+
+<p> Supersampling is useful for the pixels on the edge of the triangle. If we
+  just decide to either fill in the pixel fully or not at all then we end up with a jagged boundary.
+  Super sampling works to smoothen the transition between in-triangle and out-triangle pixels.</p>
+<div align="middle">
+  <table style="width=100%">
+    <tr>
+      <td>
+        <img src="images/task1_p4.png" align="middle" width="400px"/>
+        <figcaption align="middle">1 sample rate</figcaption>
+      </td>
+      <td>
+        <img src="images/task2_p4_4.png" align="middle" width="400px"/>
+        <figcaption align="middle">4 sample rate</figcaption>
+      </td>
+      <td>
+        <img src="images/task2_p4_16.png" align="middle" width="400px"/>
+        <figcaption align="middle">16 sample rate</figcaption>
+      </td>
+    </tr>
+  </table>
+</div>
+
+
+<h3 align="middle">Part 3: Transforms</h3>
+I updated the robot to do a salute.
+<img src="images/robot.png" align="middle" width="400px"/>
+
+<h2 align="middle">Section II: Sampling</h2>
+
+<h3 align="middle">Part 4: Barycentric coordinates</h3>
+<p> Barycentric coordinates are a trio of coordinates that each correspond to one vertex of the triangle.
+The closer our point is to a vertex, the larger that vertex's Barycentric coordinate should be, the more that point's color will correspond to the vertex's color. </p>
+<img src="images/task4.png" align="middle" width="400px"/>
+
+
+<h3 align="middle">Part 5: "Pixel sampling" for texture mapping</h3>
+<p> When we are pixel sampling from our texture, for each location of the sample buffer we look at the corresponding area on the texture.
+  In nearest sampling, we get the nearest pixel on the texture to our current sample buffer point.
+  In bilinear sampling, we get the nearest 4 pixels on the texture and compute the lerps (linear interpolation) to find how much we should weight each
+  of the 4 pixels by in our sample buffer color calculation. </p>
+
+
+
+
+<div align="middle">
+  <table style="width=100%">
+    <tr>
+      <td>
+        <img src="images/task5_nearest.png" align="middle" width="400px"/>
+        <figcaption align="middle">Nearest, 1 sample rate.</figcaption>
+      </td>
+      <td>
+        <img src="images/task5_bilinear.png" align="middle" width="400px"/>
+        <figcaption align="middle">Bilinear, 1 sample rate.</figcaption>
+      </td>
+    </tr>
+    <br>
+    <tr>
+      <td>
+        <img src="images/task5_nearest_16.png" align="middle" width="400px"/>
+        <figcaption align="middle">Nearest, 16 sample rate.</figcaption>
+      </td>
+      <td>
+        <img src="images/task5_bilinear_16.png" align="middle" width="400px"/>
+        <figcaption align="middle">Bilinear, 16 sample rate.</figcaption>
+      </td>
+    </tr>
+  </table>
+</div>
+
+<p> I chose this example focusing on the arches of the Campanille observation area.
+  For me, the nearest is very jagged and the colors contrast so much its hard to tell
+  where the vertical part of the arch meets the inside of the campanille. Meanwhile,
+  the bilinear sampling method produces a defined, round arch and it is easier to distinguish the exterior from the interior.</p>
+
+
+<h3 align="middle">Part 6: "Level sampling" with mipmaps for texture mapping</h3>
+<p> It doesn't make sense to use the finest detailed texture map if our sample frame moves around too fast to capture the intricacy of the texture.
+  By that logic, we use level sampling by the max of the square root of the deriviatives to best capture the tradeoff between artifacts (more detailed texture map) and antialiasing (less detailed texture map). </p>
+<p> In terms of performance, defaulting to L_Zero is fastest since we don't have to do level calculations, followed by l_nearest, and l_linear.
+l_nearest is faster in that we don't have to do sample from two different mipmap levels and then weight the two level samples.
+Speed and antialiasing are the main tradeoffs. Antialiasing comes at the cost of speed. Memory isn't as much of an issue as we don't copy over the entire mipmap array just the address to the mipmap array. </p>
+
+<div align="middle">
+  <table style="width=100%">
+    <tr>
+      <td>
+        <img src="images/l_bilinear_nearest.png" align="middle" width="400px"/>
+        <figcaption align="middle"> Linear level, nearest point</figcaption>
+      </td>
+      <td>
+        <img src="images/l_zero_nearest.png" align="middle" width="400px"/>
+        <figcaption align="middle"> Zero level, nearest point.</figcaption>
+      </td>
+    </tr>
+    <br>
+    <tr>
+      <td>
+        <img src="images/l_zero_bilinear.png" align="middle" width="400px"/>
+        <figcaption align="middle">Zero level, bilinear point.</figcaption>
+      </td>
+      <td>
+        <img src="images/l_bilinear_bilnear.png" align="middle" width="400px"/>
+        <figcaption align="middle">linear, bilinear point.</figcaption>
+      </td>
+    </tr>
+  </table>
+</div>
+
+
+<h2 align="middle">Section III: Art Competition</h2>
+<p>If you are not participating in the optional art competition, don't worry about this section!</p>
+
+<h3 align="middle">Part 7: Draw something interesting!</h3>
+
+</body>
 </html>
