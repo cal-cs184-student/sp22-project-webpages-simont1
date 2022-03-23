@@ -1,7 +1,309 @@
-<html>
-	<head>
-	</head>
-	<body>
-		Project 3-1 here
-	</body>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+<style>
+    div.padded {
+      padding-top: 0px;
+      padding-right: 100px;
+      padding-bottom: 0.25in;
+      padding-left: 100px;
+    }
+  </style>
+<title>Simon Tsui  |  CS 184</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rel="stylesheet" type="text/css" href="style.css" media="screen" />
+</head>
+<body>
+<br />
+<h1 align="middle">Assignment 3: PathTracer</h1>
+    <h2 align="middle">Simon Tsui</h2>
+
+    <div class="padded">
+        <p>In this project, I implemented ray tracing. There were many aspects to get ray tracing up and running. I had to take into account factors such as:
+          <ol>
+            <li> the point from where we are viewing the object at </li>
+            <li> object space vs world space </li>
+            <li> Bounding Volume Hierarchy to speed up how we trace rays </li>
+            <li> Accounting for Direct and Indirect Illumination </li>
+          </ol>
+        </p>
+    </div>
+
+
+
+    <h2 align="middle">Part 1: Ray Generation and Intersection</h2>
+        <p>What I implemented: Generating Camera Rays, getting pixel samples, and testing intersections with primitives (triangles and spheres)</p>
+        <p> Generating Camera Rays: We need to convert sensor sample coordinates (on the range of 0 to 1) to camera coordinates (on the range of -tan(hFov/2) to tan(hFov/2)) </p>
+        <p> We sample pixels by generating rays at different (x, y) corodinates</p>
+        <p> To calculate whether or not a ray intersects with a primitive, I referred to the equations on the following slide.</p>
+
+        <div align="center">
+            <table style="width=100%">
+                <tr>
+                    <td align="middle">
+                    <img src="images/triangle_algo.jpg" width="480px" />
+                    <figcaption align="middle"><pre align="middle">For there to be an intersection, the following have to be true: t >= 0, 0 <= b1 <= 1, 0 <= b2 <= 1, 0 <= 1 - b1 - b2 <= 1</pre></figcaption>
+                    <p> We can then use these values (b1, b2, 1 - b1 - b2) as the coefficients for barycentric coordinates(p0, p1, p2).</p>
+                  </td>
+                </tr>
+                <tr>
+                    <td align="middle">
+                    <img src="images/sphere_algo.jpg" width="480px" />
+                    <figcaption align="middle"><pre align="middle">For there to be an intersection, only if b^2 - 4ac >= 0 and t is between min_t and max_t </pre></figcaption>
+                  </td>
+                </tr>
+            </table>
+        </div>
+        <p> When we intersect with a primitive, we update ray.max_t to time of the intersection so that we only consider other primitives who are closer to the ray origin than the current one.</p>
+
+        <div align="center">
+            <table style="width=100%">
+                <tr>
+                    <td align="middle">
+                    <img src="images/CBspheres.png" width="480px" />
+                    <figcaption align="middle"></figcaption>
+                  </td>
+                </tr>
+                <tr>
+                    <td align="middle">
+                    <img src="images/bunny.png" width="480px" />
+                    <figcaption align="middle"></figcaption>
+                  </td>
+                </tr>
+            </table>
+        </div>
+
+    <h2 align="middle">Part 2: Bounding Volume Hierarchy</h2>
+        <p>What I implemented: constructing BVH, Intersecting the bounding box, and intersecting the scene in general. </p>
+        <p>We construct the BVH by getting the centroid of each primitive and calculating the range along each axis. We take the axis with the largest range, get the midpoint and partition the primitives iterator along that axis. We do that repeatedly until the child nodes have less primitives than the max_leaf_size. As we are building out the BVH, we set the left and right children to the child calls and split the iterator so we only have to check the smaller list of primitives at each node.
+        </p>
+        <div align="center">
+            <table style="width=100%">
+                <tr>
+                    <td align="middle">
+                    <img src="images/bvh_traversal.jpg" width="480px" />
+                    <figcaption align="middle">How I traversed the BVH</figcaption>
+                    </td>
+                </tr>
+            </table>
+            <table style="width=100%">
+                <tr>
+                    <td align="middle">
+                    <img src="images/cow_whole.png" width="480px" />
+                    <figcaption align="middle">Root node BVH</figcaption>
+                    </td>
+                    <td align="middle">
+                    <img src="images/cow_half.png" width="480px" />
+                    <figcaption align="middle">One recursive call of BVH: Right half</figcaption>
+                    </td>
+                </tr>
+                <tr>
+                  <td align="middle">
+                  <img src="images/planck.png" width="480px" />
+                  <figcaption align="middle">Very large dae file</figcaption>
+                  </td>
+                  <td align="middle">
+                  <img src="images/teapot.png" width="480px" />
+                  <figcaption align="middle">Teapot.dae</figcaption>
+                  </td>
+                </tr>
+            </table>
+        </div>
+        <p> Time it took to render ../dae/meshedit/cow.dae without BVH: 8.42 seconds</p>
+        <p> Time it took to render ../dae/meshedit/cow.dae with BVH: 0.0483 seconds</p>
+
+        <p> Time it took to render ../dae/meshedit/MaxPlanck.dae without BVH: 96.5 seconds</p>
+        <p> Time it took to render ../dae/meshedit/MaxPlanck.dae with BVH: 0.0595 seconds</p>
+        <p> Because BVH turns the operation from O(N) to O(logN), the images render much quicker.
+
+    <h2 align="middle">Part 3: Direct Illumination</h2>
+        <p> Direct lighting is composed of zero-bounce and one-bounce illumination. Zero bounce means the light is coming directly from a light source. 1 bounce means that the light is bouncing off an object and we are using the object's reflectance to calculate the lighting. </p>
+        <p> For zero-bounce, we just computed the emission of the light source.</p>
+        <p> For one-bounce, we trace the ray from our viewpoint (the camera) to the object it touches (w_out). Then we sample possible rays that come towards the object(w_in) that could've contributed to L_out. We trace backwards along w_in trying to find the origin of the ray to see if its a light source. We sample either by using uniform hemisphere sampling or importance sampling.</p>
+        <p> Sampling uniform hemisphere: We sample the hemisphere above the object intersection point uniformly. "Above" is defined using the object's normal which is defined as a vector (0, 0, 1). Anything direction is above the object will also have a positive z-value.  Each w_in is equally likely to be sampled. If the point we hit belongs to a light source, we factor in its light emission.</p>
+        <p> In importance sampling, we only sample from lights. If there are no objects in between the light source and our current object then we factor in the light's emission.</p>
+        <div align="center">
+            <table style="width=100%">
+                <tr>
+                    <td align="middle">
+                    <img src="images/estimator.png" width="480px" />
+                    <figcaption align="middle">Estimator as to how the light samples were factored in where f is the reflectance, L is the emission, cos is the angle and p is the direction sampling probability.</figcaption>
+                </tr>
+                <tr>
+                    <td align="middle">
+                    <img src="images/bunny_direct.png" width="480px" />
+                    <figcaption align="middle">Bunny rendered from direct light sampling only.</figcaption>
+                </tr>
+            </table>
+        </div>
+
+
+    <h4 align="middle">Uniform hemisphere sampling vs Importance Sampling</h4>
+      <div align="center">
+          <table style="width=100%">
+              <tr>
+                  <td align="middle">
+                  <img src="images/CBbunny_4_8H.png" width="480px" />
+                  <figcaption align="middle">4 camera rays per pixel, 8 samples per light, Uniform hemisphere</figcaption>
+                  <td align="middle">
+                  <img src="images/CBbunny_4_8I.png" width="480px" />
+                  <figcaption align="middle">4 camera rays per pixel, 8 samples per light, Importance</figcaption>
+              </tr>
+              <tr>
+                  <td align="middle">
+                  <img src="images/CBbunny_16_8H.png" width="480px" />
+                  <figcaption align="middle">16 camera rays per pixel, 8 samples per light, Uniform hemisphere</figcaption>
+                  <td align="middle">
+                  <img src="images/CBbunny_16_8I.png" width="480px" />
+                  <figcaption align="middle">16 camera rays per pixel, 8 samples per light, Importance</figcaption>
+              </tr>
+              <tr>
+                  <td align="middle">
+                  <img src="images/CBbunny_32_32H.png" width="480px" />
+                  <figcaption align="middle">32 camera rays per pixel, 32 samples per light, Uniform hemisphere</figcaption>
+                  <td align="middle">
+                  <img src="images/CBbunny_32_32I.png" width="480px" />
+                  <figcaption align="middle">32 camera rays per pixel, 32 samples per light, Importance</figcaption>
+              </tr>
+          </table>
+      </div>
+
+    <h4 align="middle">Changes to samples per light</h4>
+      <div align="center">
+          <table style="width=100%">
+              <tr>
+                  <td align="middle">
+                  <img src="images/spheres_l1.png" width="480px" />
+                  <figcaption align="middle">L = 1</figcaption>
+                </tr>
+                <tr>
+                  <td align="middle">
+                  <img src="images/spheres_l2.png" width="480px" />
+                  <figcaption align="middle">L = 2</figcaption>
+                </tr>
+                <tr>
+                  <td align="middle">
+                  <img src="images/spheres_l4.png" width="480px" />
+                  <figcaption align="middle">L = 4</figcaption>
+                </tr>
+                <tr>
+                  <td align="middle">
+                  <img src="images/spheres_l16.png" width="480px" />
+                  <figcaption align="middle">L = 16</figcaption>
+                </tr>
+                <tr>
+                  <td align="middle">
+                  <img src="images/spheres_l64.png" width="480px" />
+                  <figcaption align="middle">L = 64</figcaption>
+              </tr>
+          </table>
+      </div>
+      <p>Uniform hemisphere sampling comes out much more granular. This is because of the posssiblity of noise in our pixels. Neighboring pixels can have different number of samples hitting light sources. Meanwhile, importance sampling uses our information about the lights to only sample the lights so it converges faster.</p>
+
+    <h2 align="middle">Part 4: Global Illumination</h2>
+        <p>I implemented the at_least_one_bounce_radiance function to get indirect lighting.</p>
+        <ol>
+          <li> We bounce at least once, so that means calculating the current radiance and then recursively calling our at_least_one_bounce_radiance function</li>
+          <li> After the first bounce, we use russian roulette to cut off recursive rays. This is done with probability p of termination. </li>
+          <li> We also have to consider whether or not the ray intersects with anything in the scene. If it's not intersecting with anything then its not bouncing off of anything so there's nothing to recurse.</li>
+          <li> If a ray reaches max_depth we stop recursively calling the function entirely.</li>
+        </ol>
+
+        <h4 align="middle">Sample pictures generated by global illumination</h4>
+        <div align="center">
+            <table style="width=100%">
+                <tr>
+                    <td align="middle">
+                    <img src="images/spheres_global.png" width="480px" />
+                    <figcaption align="middle">Spheres</figcaption>
+                    <td align="middle">
+                    <img src="images/bunny_global.png" width="480px" />
+                    <figcaption align="middle">Bunny</figcaption>
+                </tr>
+                <tr>
+                    <td align="middle">
+                    <img src="images/dragon_global.png" width="480px" />
+                    <figcaption align="middle">Dragon</figcaption>
+                    <td align="middle">
+                    <img src="images/dragonBlack.png" width="480px" />
+                    <figcaption align="middle">Dragon</figcaption>
+                </tr>
+            </table>
+        </div>
+
+        <h4 align="middle">Bunnies with m = 0, 1, 2, 3, 100</h4>
+        <div align="center">
+            <table style="width=100%">
+                <tr>
+                    <td align="middle">
+                    <img src="images/bunny_m0.png" width="480px" />
+                    <figcaption align="middle">max ray depth 0</figcaption>
+                    <td align="middle">
+                    <img src="images/bunny_m1.png" width="480px" />
+                    <figcaption align="middle">max ray depth 1</figcaption>
+                    <td align="middle">
+                    <img src="images/bunny_m2.png" width="480px" />
+                    <figcaption align="middle">max ray depth 2</figcaption>
+                </tr>
+                <tr>
+                    <td align="middle">
+                    <img src="images/bunny_m3.png" width="480px" />
+                    <figcaption align="middle">max ray depth 3</figcaption>
+                    <td align="middle">
+                    <img src="images/bunny_m100.png" width="480px" />
+                    <figcaption align="middle">max ray depth 100</figcaption>
+                </tr>
+            </table>
+        </div>
+
+
+        <h4 align="middle">Samples per pixel rates (1 to 1024)</h4>
+        <div align="center">
+            <table style="width=100%">
+                <tr>
+                    <td align="middle">
+                    <img src="images/spheres_global_s1.png" width="480px" />
+                    <figcaption align="middle">Sample rate 1</figcaption>
+                    <td align="middle">
+                    <img src="images/spheres_global_s2.png" width="480px" />
+                    <figcaption align="middle">Sample rate 2</figcaption>
+                    <td align="middle">
+                    <img src="images/spheres_global_s4.png" width="480px" />
+                    <figcaption align="middle">Sample rate 4</figcaption>
+                    <td align="middle">
+                    <img src="images/spheres_global_s8.png" width="480px" />
+                    <figcaption align="middle">Sample rate 8</figcaption>
+                </tr>
+                <tr>
+                    <td align="middle">
+                    <img src="images/spheres_global_s16.png" width="480px" />
+                    <figcaption align="middle">Sample rate 16</figcaption>
+                    <td align="middle">
+                    <img src="images/spheres_global_s64.png" width="480px" />
+                    <figcaption align="middle">Sample rate 64</figcaption>
+                    <td align="middle">
+                    <img src="images/spheres_global_s1024.png" width="480px" />
+                    <figcaption align="middle">Sample rate 1024</figcaption>
+                </tr>
+            </table>
+        </div>
+
+
+    <h2 align="middle">Part 5: Adaptive Sampling</h2>
+        <p> The idea of adaptive sampling is that not every pixel needs to have the same number of samples. Some pixels will converge faster than other. We calculate the mean and variance at regular intervals to generate a 95% confidence interval for the actual illuminance of the pixel. </p>
+        <div align="center">
+            <table style="width=100%">
+                <tr>
+                    <td align="middle">
+                    <img src="images/bunnyAdaptive.png" width="480px" />
+                    <figcaption align="middle">Actual picture</figcaption>
+                    <td align="middle">
+                    <img src="images/bunnyAdaptive_rate.png" width="480px" />
+                    <figcaption align="middle">Number of samples needed to converge. (Red is more samples, blue is less samples)</figcaption>
+                </tr>
+            </table>
+        </div>
+
+</div>
+</body>
 </html>
