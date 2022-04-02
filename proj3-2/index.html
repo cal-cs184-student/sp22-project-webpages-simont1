@@ -1,7 +1,103 @@
-<html>
-	<head>
-	</head>
-	<body>
-		Project 3-2 here
-	</body>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+<style>
+    div.padded {
+      padding-top: 0px;
+      padding-right: 100px;
+      padding-bottom: 0.25in;
+      padding-left: 100px;
+    }
+  </style>
+<title>Simon Tsui  |  CS 184</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rel="stylesheet" type="text/css" href="style.css" media="screen" />
+</head>
+<body>
+<br />
+<h1 align="middle">Assignment 3: PathTracer</h1>
+    <h2 align="middle">Simon Tsui</h2>
+
+    <div class="padded">
+        <p>For this project, I worked on Mirror, Refraction, and Glass BSDFs and thin lens camera rays.</p>
+        <p>The BSDFs involved implementing the refract and reflect functions in addition to sample_f functions. It involved computing both the amount of light and the direction of light.</p>
+        <p>For the thin lens, we also had to sample refracting rays along the lens. Because there are additional refracting rays, only the objects that are on the plane of focus are sharp.</p>
+
+    <h2 align="middle">Part 1: Mirror and Glass Materials</h2>
+        <div align="center">
+            <table style="width=100%">
+                <tr>
+                    <td align="middle">
+                    <img src="images/spheres0.png" width="480px" />
+                    <figcaption align="middle">0 ray bounces</figcaption>
+                    <td align="middle">
+                    <img src="images/spheres1.png" width="480px" />
+                    <figcaption align="middle">1 ray bounces</figcaption>
+                </tr>
+                <tr>
+                    <td align="middle">
+                    <img src="images/spheres2.png" width="480px" />
+                    <figcaption align="middle">2 ray bounces</figcaption>
+                    <td align="middle">
+                    <img src="images/spheres3.png" width="480px" />
+                    <figcaption align="middle">3 ray bounces</figcaption>
+                </tr>
+                <tr>
+                    <td align="middle">
+                    <img src="images/spheres4.png" width="480px" />
+                    <figcaption align="middle">4 ray bounces</figcaption>
+                    <td align="middle">
+                    <img src="images/spheres5.png" width="480px" />
+                    <figcaption align="middle">5 ray bounces</figcaption>
+                </tr>
+                <tr>
+                    <td align="middle">
+                    <img src="images/spheres100.png" width="480px" />
+                    <figcaption align="middle">100 ray bounces</figcaption>
+                </tr>
+            </table>
+        </div>
+        <p> With 0 ray bounces, we only have the light source light. Hence the box at the top. With 1 ray bounce, the rest of the box comes to picture and we have dark shadows below the spheres. The spheres are also entirely black except for the exact surface intersection where the light hits the sphere.
+        With 1 ray bounce, no reflection or refraction has occurred because those have more bounces within the sphere that they need to take before it hits our camera.</p>
+        <p> At 2 ray bounces, we start to see reflection. The back sphere is lit up, and we can see the reflection of the front sphere on it. Refraction takes more ray bounces as there is an additional ray going inside the sphere. All the images that were genrerated with 3 ray bounces or more have both refraction and reflection. Additional ray bounces after that contribute to the overall global illumination  of the image.</p>
+
+
+
+    <h2 align="middle">Part 4: Depth of Field</h2>
+        <p> With a pinhole camera, light can only come in through one point. This means that we get the image exactly as is but upside down because we can only trace the rays through that one point.
+        Thin lens, there are multiple rays to consider. There's the original ray that goes directly between the object and the image but there's also the refraction ray that goes straight to the lens and then refracts to produce the image. For this reason, the focal distance and distance of the object from the lens matters. If they don't meet at where our sensor is then it will appear blurry.</p>
+        <div align="center">
+            <table style="width=100%">
+                <tr>
+                    <td align="middle">
+                    <img src="images/CBdragonstack.png" width="480px" />
+                    <figcaption align="middle">different depth focuses on the same image</figcaption>
+                </tr>
+            </table>
+        </div>
+        <p>In this image, I selected cell renders on the focused rectangular areas. The rest of the image is blurry as it is unfocused. The focused parts include the front foot of the dragon, the head of the dragon, the top edge of the box next to the light, the red wall on the left, and the back </p>
+        <div align="center">
+            <table style="width=100%">
+                <tr>
+                    <td align="middle">
+                    <img src="images/CBdragon_screenshot_0050.png" width="480px" />
+                    <figcaption align="middle">Lens radius 0.05</figcaption>
+                    <td align="middle">
+                    <img src="images/CBdragon_screenshot_0130.png" width="480px" />
+                    <figcaption align="middle">Lens radius 0.13</figcaption>
+                </tr>
+                <tr>
+                    <td align="middle">
+                    <img src="images/CBdragon_screenshot_0230.png" width="480px" />
+                    <figcaption align="middle">Lens radius 0.23</figcaption>
+                    <td align="middle">
+                    <img src="images/CBdragon_screenshot_0280.png" width="480px" />
+                    <figcaption align="middle">Lens radius 0.28</figcaption>
+                </tr>
+            </table>
+        </div>
+        <p>I tried keeping the same part of the dragon in focus as much as I could while changing the aperture and distance from the box at the same time. As the camera moves away from the image, I increased the aperture to keep it in focus.</p>
+
+</div>
+</body>
 </html>
