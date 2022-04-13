@@ -1,7 +1,223 @@
-<html>
-	<head>
-	</head>
-	<body>
-		Project 4 here
-	</body>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+<style>
+  body {
+    padding: 100px;
+    width: 1000px;
+    margin: auto;
+    text-align: left;
+    font-weight: 300;
+    font-family: 'Open Sans', sans-serif;
+    color: #121212;
+  }
+  h1, h2, h3, h4 {
+    font-family: 'Source Sans Pro', sans-serif;
+  }
+</style>
+<title>CS 184 Cloth Sim</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link href="https://fonts.googleapis.com/css?family=Open+Sans|Source+Sans+Pro" rel="stylesheet">
+</head>
+
+
+<body>
+
+<h1 align="middle">CS 184: Computer Graphics and Imaging, Spring 2022</h1>
+<h1 align="middle">Project 4: Cloth Simulator</h1>
+<h2 align="middle">Simon Tsui, CS184-afi</h2>
+
+<br><br>
+
+<div>
+
+<h2 align="middle">Overview</h2>
+<p></p>
+
+<h2 align="middle">Part I: Masses and springs</h2>
+<div align="center">
+    <table style="width=100%">
+        <tr>
+            <td align="middle">
+            <img src="images/p1_all.png" width="480px" />
+            <figcaption align="middle">All constraints</figcaption>
+          </tr>
+          <tr>
+            <td align="middle">
+            <img src="images/p1_no_shearing.png" width="480px" />
+            <figcaption align="middle">No shearing constraints</figcaption>
+          </tr>
+          <tr>
+            <td align="middle">
+            <img src="images/p1_only_shearing.png" width="480px" />
+            <figcaption align="middle">Only shearing constraints</figcaption>
+        </tr>
+    </table>
+</div>
+
+<h2 align="middle">Part II: Simulation via numerical integration</h2>
+<p> The lower the ks value, the more the cloth weights itself down. The higher the ks value, the less the cloth sags down.</p>
+<p> The higher the density, the more the cloth sags down. The lower the density, the less the cloth sags down.</p>
+<p> The lower damping value, the faster the cloth moves. It moves more bouncy. The higher the damping value, the slower the cloth moves and the faster it settles.</p>
+<div align="center">
+    <table style="width=100%">
+        <tr>
+            <td align="middle">
+            <img src="images/p2_final.png" width="480px" />
+            <figcaption align="middle">Final resting state</figcaption>
+          </tr>
+    </table>
+</div>
+
+
+<h2 align="middle">Part III: Handling collisions with other objects</h2>
+<div align="center">
+    <table style="width=100%">
+        <tr>
+            <td align="middle">
+            <img src="images/p3_500.png" width="480px" />
+            <figcaption align="middle">ks = 500</figcaption>
+        </tr>
+        <tr>
+            <td align="middle">
+            <img src="images/p3_5000.png" width="480px" />
+            <figcaption align="middle">ks = 5000</figcaption>
+        </tr>
+        <tr>
+            <td align="middle">
+            <img src="images/p3_50000.png" width="480px" />
+            <figcaption align="middle">ks = 50000</figcaption>
+        </tr>
+    </table>
+</div>
+<p> The lower the ks value, the more the cloth "hugs" around the sphere. Meanwhile, the screenshot at ks = 50000 has a very "boxy" cloth draped around the sphere.</p>
+
+<div align="center">
+<tr>
+    <td align="middle">
+    <img src="images/p3_plane.png" width="480px" />
+    <figcaption align="middle">Cloth lying on the plane</figcaption>
+</tr>
+</div>
+
+<h2 align="middle">Part IV: Handling self-collisions</h2>
+
+<div align="center">
+    <table style="width=100%">
+        <tr>
+            <td align="middle">
+            <img src="images/p4_first.png" width="480px" />
+            <figcaption align="middle">Beginning</figcaption>
+        </tr>
+        <tr>
+            <td align="middle">
+            <img src="images/p4_middle.png" width="480px" />
+            <figcaption align="middle">Middle</figcaption>
+        </tr>
+        <tr>
+            <td align="middle">
+            <img src="images/p4_resting.png" width="480px" />
+            <figcaption align="middle">Resting</figcaption>
+        </tr>
+    </table>
+</div>
+
+<p>You can really see the cloth folding on itself in the restful state. Even in the beginning, you can see the middle back part of the cloth start to condense.</p>
+<div align="center">
+    <table style="width=100%">
+        <tr>
+            <td align="middle">
+            <img src="images/p4_lowDensity.png" width="480px" />
+            <figcaption align="middle">Density = 5</figcaption>
+            <td align="middle">
+            <img src="images/p4_highDensity.png" width="480px" />
+            <figcaption align="middle">Density = 60</figcaption>
+        </tr>
+        <tr>
+            <td align="middle">
+            <img src="images/p4_lowKS.png" width="480px" />
+            <figcaption align="middle">ks = 1000</figcaption>
+            <td align="middle">
+            <img src="images/p4_highKS.png" width="480px" />
+            <figcaption align="middle">ks = 50000</figcaption>
+        </tr>
+    </table>
+</div>
+<p>Higher ks values seem to increase folding. Ther lower ks values seem to cause less of the cloth folding on itself.</p>
+<p>Higher density causes less folding, lower density causes more folding.</p>
+
+<h2 align="middle">Part V: Shaders</h2>
+
+<p>Vertex shaders help create the frame of our images. It mainly handles the conversion of our shape positions into coordinates. Fragment shaders fill in the shape with colors and other things such as the material of the shape.</p>
+<p>The Blinn-Phong shading model is a model that takes into account three different types of light on any surface. Ambient light is the light of the environment as most things in the world are never truly dark; there's usually always some source of light</p>
+<p>Diffuse shading is the reflection of light that hits the object. The object is dependent on the angle of the light. Specular shading creates shiny spots for lighting that is particularly intense. This is if the camera is close to the mirror reflection direction of the light.</p>
+<div align="center">
+    <table style="width=100%">
+        <tr>
+            <td align="middle">
+            <img src="images/phong_ambient.png" width="480px" />
+            <figcaption align="middle">Ambient only</figcaption>
+            <td align="middle">
+            <img src="images/phong_diffuse.png" width="480px" />
+            <figcaption align="middle">Diffuse only</figcaption>
+        </tr>
+        <tr>
+            <td align="middle">
+            <img src="images/phong_specular.png" width="480px" />
+            <figcaption align="middle">Specular only</figcaption>
+            <td align="middle">
+            <img src="images/phong_all.png" width="480px" />
+            <figcaption align="middle">Complete Blinn-Phong</figcaption>
+        </tr>
+    </table>
+</div>
+<div align="center">
+    <table style="width=100%">
+        <tr>
+            <td align="middle">
+            <img src="images/p5_texture.png" width="480px" />
+            <figcaption align="middle">Custom texture</figcaption>
+        </tr>
+    </table>
+</div>
+<p>Diffuse shading is the reflection of light that hits the object. The object is dependent on the angle of the light. Specular shading creates shiny spots for lighting that is particularly intense. This is if the camera is close to the mirror reflection direction of the light.</p>
+<div align="center">
+    <table style="width=100%">
+        <tr>
+            <td align="middle">
+            <img src="images/p5_bumpCloth.png" width="480px" />
+            <figcaption align="middle">Bump Cloth</figcaption>
+            <td align="middle">
+            <img src="images/p5_bumpSphere.png" width="480px" />
+            <figcaption align="middle">Bump Sphere</figcaption>
+        </tr>
+        <tr>
+            <td align="middle">
+            <img src="images/p5_displacementCloth.png" width="480px" />
+            <figcaption align="middle">Displacement cloth</figcaption>
+            <td align="middle">
+            <img src="images/phong_all.png" width="480px" />
+            <figcaption align="middle">Displacement Sphere</figcaption>
+        </tr>
+    </table>
+</div>
+<p> Used the checkered pattern from texture 4. Under the -o -a 16, the checkered pattern boundaries is less linear. The lines demarking the borders of the checkers are zig-zagy. The lines are much straighter in the -o -a 128 format. </p>
+<p></p>
+<div align="center">
+    <table style="width=100%">
+        <tr>
+
+            <td align="middle">
+            <img src="images/p5_mirrorSphere.png" width="480px" />
+            <figcaption align="middle">Mirrored Sphere</figcaption>
+        </tr>
+        <tr>
+            <td align="middle">
+            <img src="images/p5_mirrorCloth.png" width="480px" />
+            <figcaption align="middle">Mirrored Cloth</figcaption>
+        </tr>
+    </table>
+</div>
+
+</body>
 </html>
